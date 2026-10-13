@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulasi Toko Sederhana - Game Jual Beli</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans min-h-screen p-4 md:p-8">
+
+    <div class="max-w-6xl mx-auto">
+        <!-- Header / Statistik Game -->
+        <header class="bg-slate-800 border border-slate-700 rounded-2xl p-6 mb-6 shadow-xl flex flex-col md:flex-row justify-between items-center gap-4">
+            <div>
+                <h1 class="text-2xl md:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">
+                    <i class="fa-solid fa-store mr-2"></i> Toko Sembako & Elektronik
+                </h1>
+                <p class="text-slate-400 text-sm mt-1">Kelola stok, atur harga, dan jadilah jutawan toko!</p>
+            </div>
+            
+            <div class="flex flex-wrap gap-4 items-center bg-slate-900/60 p-4 rounded-xl border border-slate-700/60">
+                <div class="text-center px-3">
+                    <p class="text-xs text-slate-400 uppercase font-semibold">Uang Kas</p>
+                    <p id="stat-money" class="text-xl font-bold text-emerald-400">Rp 100.000</p>
+                </div>
+                <div class="h-8 w-[1px] bg-slate-700 hidden sm:block"></div>
+                <div class="text-center px-3">
+                    <p class="text-xs text-slate-400 uppercase font-semibold">Reputasi Toko</p>
+                    <p id="stat-rep" class="text-xl font-bold text-amber-400">⭐ 10</p>
+                </div>
+                <div class="h-8 w-[1px] bg-slate-700 hidden sm:block"></div>
+                <div class="text-center px-3">
+                    <p class="text-xs text-slate-400 uppercase font-semibold">Waktu Toko</p>
+                    <p id="stat-time" class="text-xl font-bold text-cyan-400">08:00 WIB</p>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- Kolom 1 & 2: Toko & Inventaris Barang -->
+            <div class="lg:col-span-2 space-y-6">
+                
+                <!-- Kontrol Toko & Status Buka/Tutup -->
+                <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 shadow-xl flex justify-between items-center">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-200">Status Operasional</h2>
+                        <p id="store-status-text" class="text-sm text-amber-400 font-medium">Toko Tutup (Jam 08:00 - 20:00)</p>
+                    </div>
+                    <button id="btn-toggle-store" onclick="toggleStore()" class="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-lg transition transform active:scale-95 cursor-pointer">
+                        <i class="fa-solid fa-power-off mr-2"></i> Buka Toko
+                    </button>
+                </div>
+
+                <!-- Daftar Barang Jualan & Manajemen Harga -->
+                <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 shadow-xl">
+                    <h2 class="text-lg font-bold text-slate-200 mb-4"><i class="fa-solid fa-boxes-stacked mr-2 text-cyan-400"></i> Etalase Barang & Harga</h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="items-container">
+                        <!-- Render dari JavaScript -->
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Kolom 3: Upgrade, Statistik, & Log Aktivitas -->
+            <div class="space-y-6">
+                
+                <!-- Menu Upgrade -->
+                <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 shadow-xl">
+                    <h2 class="text-lg font-bold text-slate-200 mb-4"><i class="fa-solid fa-arrow-up-right-dots mr-2 text-purple-400"></i> Upgrade Toko</h2>
+                    <div class="space-y-3" id="upgrades-container">
+                        <!-- Render dari JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Log Aktivitas Toko -->
+                <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 shadow-xl">
+                    <h2 class="text-lg font-bold text-slate-200 mb-3"><i class="fa-solid fa-rectangle-list mr-2 text-blue-400"></i> Log Aktivitas</h2>
+                    <div id="log-box" class="bg-slate-900 border border-slate-700 rounded-xl p-3 h-64 overflow-y-auto text-xs space-y-2 font-mono text-slate-300">
+                        <div class="text-slate-500">[08:00] Selamat datang! Silakan beli stok dan buka toko Anda.</div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Script Game Logika -->
+    <script>
+        // Data State Game
+        let gameState = {
+            money: 100000,
+            reputation: 10,
+            hour: 8,
+            minute: 0,
+            isStoreOpen: false,
+            timeSpeed: 1000, // 1 detik dunia nyata = 10 menit game
+            maxStockCapacity: 20,
+            items: [
+                { id: 'chips', name: 'Keripik Singkong', buyPrice: 2000, sellPrice: 3500, stock: 5, maxStock: 10, icon: 'fa-cookie-bite' },
+                { id: 'drink', name: 'Teh Botol', buyPrice: 3000, sellPrice: 5000, stock: 5, maxStock: 10, icon: 'fa-bottle-water' },
+                { id: 'noodle', name: 'Mie Instan Cup', buyPrice: 4000, sellPrice: 6500, stock: 2, maxStock: 10, icon: 'fa-bowl-food' },
+                { id: 'powerbank', name: 'Powerbank Mini', buyPrice: 45000, sellPrice: 70000, stock: 0, maxStock: 5, icon: 'fa-battery-full' }
+            ],
+            upgrades: [
+                { id: 'shelf', name: 'Rak Ekstra (+Kapasitas Stok)', price: 50000, level: 0, maxLevel: 5 },
+                { id: 'banner', name: 'Spanduk Promosi (+Reputasi Pelanggan)', price: 75000, level: 0, maxLevel: 3 }
+            ]
+        };
+
+        let gameTimer = null;
+
+        // Format Rupiah
+        function formatRupiah(num) {
+            return 'Rp ' + num.toLocaleString('id-ID');
+        }
+
+        // Render UI
+        function updateUI() {
+            document.getElementById('stat-money').innerText = formatRupiah(gameState.money);
+            document.getElementById('stat-rep').innerText = '⭐ ' + gameState.reputation;
+            
+            let timeStr = `${String(gameState.hour).padStart(2, '0')}:${String(gameState.minute).padStart(2, '0')} WIB`;
+            document.getElementById('stat-time').innerText = timeStr;
+
+            // Status Toko Text
+            let statusText = document.getElementById('store-status-text');
+            let btnToggle = document.getElementById('btn-toggle-store');
+            if (gameState.isStoreOpen) {
+                statusText.innerText = "Toko Sedang Buka (Melayani Pembeli)";
+                statusText.className = "text-sm text-emerald-400 font-medium animate-pulse";
+                btnToggle.innerHTML = '<i class="fa-solid fa-power-off mr-2"></i> Tutup Toko';
+                btnToggle.className = "px-6 py-3 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl shadow-lg transition transform active:scale-95 cursor-pointer";
+            } else {
+                statusText.innerText = "Toko Tutup (Jam Operasional 08:00 - 20:00)";
+                statusText.className = "text-sm text-amber-400 font-medium";
+                btnToggle.innerHTML = '<i class="fa-solid fa-power-off mr-2"></i> Buka Toko';
+                btnToggle.className = "px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-lg transition transform active:scale-95 cursor-pointer";
+            }
+
+            renderItems();
+            renderUpgrades();
+        }
+
+        // Render Daftar Barang
+        function renderItems() {
+            let container = document.getElementById('items-container');
+            container.innerHTML = '';
+
+            gameState.items.forEach(item => {
+                let html = `
+                    <div class="bg-slate-900 border border-slate-700/80 rounded-xl p-4 flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="font-bold text-slate-200"><i class="fa-solid ${item.icon} mr-2 text-cyan-400"></i>${item.name}</span>
+                                <span class="text-xs bg-slate-800 px-2 py-1 rounded text-slate-300 font-mono">Stok: ${item.stock}/${item.maxStock}</span>
+                            </div>
+                            <p class="text-xs text-slate-400 mb-3">Modal Beli: <span class="text-slate-200">${formatRupiah(item.buyPrice)}</span></p>
+                        </div>
+                        
+                        <div class="space-y-3">
+                            <div>
+                                <label class="text-[11px] text-slate-400 block mb-1">Harga Jual (Atur Sendiri):</label>
+                                <div class="flex gap-2">
+                                    <input type="number" id="price-${item.id}" value="${item.sellPrice}" onchange="changePrice('${item.id}', this.value)" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-1 text-sm text-white font-mono focus:outline-none focus:border-cyan-500">
+                                </div>
+                            </div>
+                            
+                            <button onclick="buyStock('${item.id}')" class="w-full py-2 bg-slate-700 hover:bg-cyan-600 text-white text-xs font-bold rounded-lg transition cursor-pointer">
+                                <i class="fa-solid fa-cart-plus mr-1"></i> Beli Stok (${formatRupiah(item.buyPrice)})
+                            </button>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += html;
+            });
+        }
+
+        // Render Upgrades
+        function renderUpgrades() {
+            let container = document.getElementById('upgrades-container');
+            container.innerHTML = '';
+
+            gameState.upgrades.forEach(upg => {
+                let isMax = upg.level
